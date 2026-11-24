@@ -1,6 +1,19 @@
+<div align="center">
+
 # Rea-Lyn Macompas — Portfolio Website
 
-Personal portfolio site for Rea-Lyn Macompas, a 4th-year BS Information Technology student and IT intern. Single-page site built with plain HTML, CSS, and JavaScript (no framework) — hero/about, a projects grid, testimonials, and a contact section, with a light/dark theme toggle.
+Personal portfolio site for a BS Information Technology graduate and IT intern.
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white)
+
+</div>
+
+---
+
+Single-page site: hero/about, a projects grid, testimonials, and a contact section, with a light/dark theme toggle. No framework, no build step — plain HTML, CSS, and JavaScript.
 
 ## Built with
 
@@ -11,10 +24,14 @@ Personal portfolio site for Rea-Lyn Macompas, a 4th-year BS Information Technolo
 
 ## Files
 
-- `home.html` — markup
-- `home.css` — styles, including the light/dark theme tokens
-- `home.js` — nav/scroll behavior, theme toggle, testimonials, contact form
-- `images/` — site images
+| File | Purpose |
+|---|---|
+| `index.html` | markup |
+| `home.css` | styles, including the light/dark theme tokens |
+| `home.js` | nav/scroll behavior, theme toggle, testimonials, contact form |
+| `images/` | site images |
+
+---
 
 ## Projects shown on the site
 
@@ -22,32 +39,50 @@ These are the three projects featured in the Works section, with the accurate te
 
 ### Elim Christian Academy Website
 
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat&logo=mysql&logoColor=white)
+
 The official website for a real school: news and events, a school calendar, photo albums, and a staff admin panel with Google sign-in.
 
-- **Stack:** HTML, CSS, JavaScript (frontend) · Node.js, MySQL (backend) · Google Sign-In
 - **Context:** built for a real client school (Elim Christian Academy, Inc.), done alongside internship work
-- **Code:** https://github.com/realynmacompas/ECA-School-Website
-- **Live:** https://eca-school-website.vercel.app
+- **Code:** [ECA-School-Website](https://github.com/realynmacompas/ECA-School-Website)
+- **Live:** [eca-school-website.vercel.app](https://eca-school-website.vercel.app)
 
 ### CookingIna Recipe Website
 
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+
 A responsive recipe website for traditional Filipino dishes: a browsable menu across five categories with ingredients and steps for 25 recipes, plus pages on Filipino food history and regional cuisine.
 
-- **Stack:** HTML, CSS, JavaScript — static site, no backend
+- **Stack:** static site, no backend
 - **Context:** academic group project (note this when describing it — it wasn't built solo)
-- **Code:** https://github.com/realynmacompas/cookingina-recipe-website
-- **Live:** https://cookingina-recipe-website.vercel.app
+- **Code:** [cookingina-recipe-website](https://github.com/realynmacompas/cookingina-recipe-website)
+- **Live:** [cookingina-recipe-website.vercel.app](https://cookingina-recipe-website.vercel.app)
 
 ### Looc Integrated School LMS
 
+![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-512BD4?style=flat&logo=dotnet&logoColor=white)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat&logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+
 A learning management system for a real school (DepEd Looc Integrated School), with separate student and teacher portals: courses, assignments, a gradebook and report card, and a shared calendar.
 
-- **Stack:** ASP.NET Core Web API backend, vanilla HTML/CSS/JS frontend, MySQL database (hosted on Aiven)
 - **Architecture:** monorepo (`frontend/` + `backend/`); frontend deployed on Vercel, backend deployed on Render as a Docker container (Render has no native .NET runtime, so the API ships with its own Dockerfile)
 - **Auth:** Google Sign-In, with the ID token verified server-side (`Google.Apis.Auth`) against existing student/teacher records rather than auto-creating accounts
+- **Database:** MySQL, hosted on Aiven
 - **Context:** built during the IT internship at Ace Outsourcing Solutions
-- **Code:** https://github.com/realynmacompas/looc-lms
-- **Live:** https://looc-lms.vercel.app (backend API: https://looc-lms.onrender.com — free tier, so the first request after a period of inactivity can take 30–60 seconds while it spins back up)
+- **Code:** [looc-lms](https://github.com/realynmacompas/looc-lms)
+- **Live:** [looc-lms.vercel.app](https://looc-lms.vercel.app) (backend API: [looc-lms.onrender.com](https://looc-lms.onrender.com) — free tier, so the first request after a period of inactivity can take 30–60 seconds while it spins back up)
+
+---
 
 ## Internship context
 
