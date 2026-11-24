@@ -1,0 +1,2144 @@
+/* =============================================================
+   DESIGN TOKENS
+   Core palette + type scale, defined once as CSS variables so
+   every section pulls from the same source of truth.
+============================================================= */
+:root {
+  /* Color — "The Creative Enigma": Deep Indigo, Soft Gray, Electric Purple,
+     plus a few tints/shades derived from those three so buttons, hovers,
+     and glows all still read as one deliberate family rather than
+     random extra colors. */
+  --plum: #6F2243;        /* Electric Purple — headings, nav, primary brand color */
+  --plum-deep: #0B0C10;   /* Deep Indigo — hero/footer dark surfaces */
+  --lavender: #C5C6C7;    /* Soft Gray — card & section backgrounds on light bg */
+  --cream: #F5F5F6;       /* near-white tint of Soft Gray — base page background */
+  --berry: #6F2243;       /* Electric Purple — CTAs, highlights */
+  --berry-dark: #4E1A30;  /* pressed/hover state for the accent above */
+  --gold: #C5C6C7;        /* Soft Gray — secondary accent for badges/icons on dark surfaces */
+  --ink: #0B0C10;         /* Deep Indigo — body text on light backgrounds */
+  --ink-soft: #5C5D61;    /* mid gray — secondary/muted text, meets contrast on white */
+  --paper: #FFFFFF;       /* pure white — card surfaces */
+  --star-gold: #D8A13D;   /* warm amber — star-rating fill only; --gold above is
+                             actually gray, so this is the one real "gold" accent,
+                             kept legible on both the light review cards and the
+                             dark add-a-review form */
+
+  /* Two RGB-channel tokens (no alpha) so translucent overlays can flip
+     with the theme via rgba(var(--x-rgb), alpha) instead of needing a
+     separate literal color per opacity value used around the site.
+     --surface-rgb: the tint used for card/input backgrounds and borders
+     that sit ON TOP of the page background (light-on-dark by default).
+     --overlay-rgb: the base for solid-ish translucent panels like the
+     nav bar, side dock, and chatbot panel (dark-on-page by default). */
+  --surface-rgb: 255, 255, 255;
+  --overlay-rgb: 11, 12, 16;
+
+  /* Type */
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Manrope', sans-serif;
+
+  /* Spacing scale — bumped up from the original (space-lg 3rem→3.5rem,
+     space-xl 5rem→6.5rem) so sections get noticeably more breathing
+     room, part of the site-wide move away from a tight, minimalist
+     rhythm toward one with more visual weight. */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.75rem;
+  --space-lg: 3.5rem;
+  --space-xl: 6.5rem;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius-md: 14px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* =============================================================
+   LIGHT THEME
+   The site is dark by default (see --plum-deep/--cream/--gold above).
+   Toggling data-theme="light" on <html> (see the switch in the nav and
+   the logic in home.js) re-points just those three role tokens — plus
+   the two RGB tints — to their light-mode values. Brand colors
+   (--plum, --berry, --berry-dark, --star-gold) and the already-light
+   tokens (--lavender, --ink, --ink-soft, --paper) stay the same in
+   both themes on purpose, so buttons, links, and the review cards
+   don't need any theme-specific rules of their own.
+============================================================= */
+:root[data-theme='light'] {
+  --plum-deep: #F3F1F2;  /* was near-black page background, now a soft off-white */
+  --cream: #17181C;      /* was near-white primary text, now dark text */
+  --gold: #5C5D61;       /* was light-gray secondary text, now a mid-gray (matches --ink-soft) */
+  --surface-rgb: 11, 12, 16;
+  --overlay-rgb: 255, 255, 255;
+}
+
+/* =============================================================
+   RESET & BASE
+============================================================= */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Started above the 16px browser default and got dropped in steps
+     since (19px, 18px, 17px, 15px, now 14px) across several "make it
+     all a little smaller" requests — since nearly every font-size and
+     spacing value on the site is in rem, this single change scales
+     type and internal spacing everywhere at once (icons, badges, and
+     a few other fixed-px elements are sized explicitly further down,
+     in step with this each time). Now below the 16px default on
+     purpose — the page was still reading as oversized at 100% zoom
+     with just the spacing/type scale pulled back; 14px keeps body
+     text readable while visibly shrinking everything a little more. */
+  font-size: 14px;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--gold);
+  background: var(--plum-deep);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--cream);
+  margin: 0;
+  line-height: 1.1;
+}
+
+p {
+  margin: 0;
+  max-width: 62ch; /* keeps line length readable, per type-scale guidance */
+  /* Slightly smaller default body copy size (site-wide nudge down);
+     anything that needs its own size sets font-size explicitly further
+     down and overrides this. */
+  font-size: 0.95rem;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* =============================================================
+   ICON SYSTEM
+   Every icon on the site (skill badges, contact/social links, and
+   the small UI arrows) is one of the same thin-stroke, rounded-cap
+   line icons, sized per context below. Color always comes from
+   currentColor, so an icon picks up whatever color its container
+   already uses (var(--gold), var(--cream), etc.) with no extra rules.
+============================================================= */
+.icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Visible keyboard focus for accessibility */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--berry);
+  outline-offset: 3px;
+}
+
+/* Shared section heading styles */
+.section-head {
+  max-width: 640px;
+  margin: 0 auto var(--space-lg);
+  text-align: center;
+}
+
+.section-head--light .section-title,
+.section-title--light {
+  color: var(--cream);
+}
+
+/* Larger, bolder treatment for headings that should carry real visual
+   weight on the page, similar in spirit to a hero headline */
+.section-title--display {
+  font-size: clamp(2.9rem, 6vw, 4.6rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Small kicker label shown above a section heading (e.g. "Selected Work"
+   above "Projects") — a bit of editorial polish that gives each section
+   its own quiet lead-in instead of the heading being the only thing to
+   look at. Tinted with the brand berry instead of the muted --gold so it
+   reads as a small, confident accent rather than fading into the body
+   copy — color-mix keeps it legible against the site's near-black
+   background (a flat --berry on its own is too dark to read at this
+   size), with a plain fallback for browsers without color-mix(). */
+.section-eyebrow {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold); /* fallback for browsers without color-mix() */
+  color: color-mix(in srgb, var(--berry) 55%, var(--cream) 45%);
+  margin-bottom: var(--space-sm);
+}
+
+.section-title {
+  font-size: clamp(2.15rem, 3.6vw, 3.4rem);
+  font-weight: 500;
+}
+
+.section-sub {
+  margin-top: var(--space-sm);
+  color: var(--gold);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-head--light .section-sub {
+  color: var(--gold);
+}
+
+/* Generic section padding rhythm */
+section {
+  padding: var(--space-xl) var(--space-md);
+}
+
+/* =============================================================
+   BUTTONS
+============================================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Matches the size the hero's two CTAs were scoped down to in an
+     earlier "shrink the hero a little" pass (was 1.05rem/2.1rem padding,
+     1.02rem text) — brought up to the base rule so every button on the
+     page (resume download, review/contact submit, hero CTAs) is one
+     consistent size instead of the hero quietly running smaller than
+     everything else. */
+  padding: 0.86rem 1.7rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.87rem;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(11, 12, 16, 0.16);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn--primary {
+  background: var(--berry);
+  color: var(--cream);
+}
+.btn--primary:hover {
+  background: var(--berry-dark);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--cream);
+  color: var(--cream);
+}
+.btn--ghost:hover {
+  background: var(--cream);
+  color: var(--plum-deep);
+}
+
+.btn--outline {
+  background: transparent;
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.btn--outline:hover {
+  background: var(--berry);
+  border-color: var(--berry);
+  color: var(--cream);
+}
+
+.btn--full {
+  width: 100%;
+}
+
+/* =============================================================
+   SCROLL PROGRESS BAR
+   A thin bar fixed to the very top of the viewport, filled by JS
+   as a percentage of how far down the page the visitor has
+   scrolled. A small, familiar orientation cue on a long page.
+============================================================= */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--berry));
+  z-index: 300;
+  transition: width 0.12s linear;
+}
+
+/* =============================================================
+   NAVIGATION
+============================================================= */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(var(--overlay-rgb), 0.75);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(197, 198, 199, 0.12);
+  transition: box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+  /* Horizontal inset lives here now, not on .nav__inner below — see
+     that rule's comment for why. */
+  padding: 0 var(--space-md);
+}
+
+.nav__inner {
+  /* Matches the other sections' 1180px content width. (The hero used
+     to be a wider 1320px two-column layout that this matched instead
+     — now that the hero is a centered 640px column, there's no
+     special wide section left to match, so this just lines up with
+     everything else.) */
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav__logo {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+.nav__logo span {
+  color: var(--gold);
+}
+
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.nav__link {
+  position: relative;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--gold);
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.nav__link:hover {
+  border-color: var(--gold);
+  color: var(--cream);
+}
+
+/* Marks whichever nav link matches the section currently in view
+   while scrolling (see the scrollspy logic in home.js) */
+.nav__link.is-current {
+  color: var(--cream);
+  border-color: var(--gold);
+}
+
+.nav__link--cta {
+  background: var(--berry);
+  color: var(--cream);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  border-bottom: none;
+}
+.nav__link--cta:hover {
+  background: var(--berry-dark);
+  color: var(--cream);
+}
+.nav__link--cta.is-current {
+  color: var(--cream);
+}
+
+/* Hamburger toggle — hidden on desktop */
+.nav__toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+}
+.nav__toggle span {
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--cream);
+  transition: transform 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+
+/* =============================================================
+   THEME TOGGLE
+   Sits in the nav bar, outside the collapsing .nav__links panel, so
+   it's reachable at every viewport width without opening the mobile
+   menu first. Both icons are always in the DOM; CSS shows only the
+   one for the theme you'd switch INTO (sun while dark, moon while
+   light) so the icon reads as an action rather than a status label.
+============================================================= */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-left: var(--space-sm);
+  border-radius: 50%;
+  border: 1px solid rgba(197, 198, 199, 0.3);
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.theme-toggle:hover {
+  border-color: var(--berry);
+  color: var(--cream);
+  transform: translateY(-2px);
+}
+
+.theme-toggle__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.theme-toggle__icon--moon {
+  display: none;
+}
+
+[data-theme='light'] .theme-toggle__icon--sun {
+  display: none;
+}
+[data-theme='light'] .theme-toggle__icon--moon {
+  display: block;
+}
+
+@media (max-width: 720px) {
+  /* .nav__links becomes a fixed off-canvas dropdown below this width
+     (see the 720px block further down), leaving .nav__logo,
+     .theme-toggle and .nav__toggle as the only items in the flex flow —
+     this pushes the toggle to sit snugly beside the hamburger on the
+     right instead of drifting to the middle under justify-content:
+     space-between. */
+  .theme-toggle {
+    margin-left: auto;
+  }
+}
+
+/* =============================================================
+   SIDE DOCK
+   Fixed vertical quick-nav rail, a secondary companion to the top
+   nav above (both stay on screen together). Only shown once the
+   viewport is wide enough that it sits in the gutter beside the
+   centered 1320px content instead of overlapping it — which is why
+   it stays hidden until the 1700px breakpoint at the bottom of this
+   rule, rather than the usual smaller nav breakpoints.
+============================================================= */
+.side-dock {
+  position: fixed;
+  top: 50%;
+  left: 24px;
+  transform: translateY(-50%);
+  z-index: 90;
+  display: none;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1.1rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(var(--overlay-rgb), 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(197, 198, 199, 0.14);
+  box-shadow: 0 8px 24px rgba(11, 12, 16, 0.3);
+}
+
+.side-dock__link {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+/* Same 26px glyph size as the hero/contact icons, so every small
+   round icon button on the site reads as one consistent family
+   instead of several slightly different sizes — kept in step with
+   those two as they've each been sized down over time. */
+.side-dock__link .icon {
+  width: 23px;
+  height: 23px;
+}
+
+.side-dock__link:hover {
+  background: rgba(197, 198, 199, 0.14);
+  color: var(--cream);
+}
+
+/* Marks whichever icon matches the section currently in view —
+   kept in sync with the top nav's .is-current via the same
+   scrollspy pass in home.js. */
+.side-dock__link.is-current {
+  background: var(--berry);
+  color: var(--cream);
+}
+
+@media (min-width: 1700px) {
+  .side-dock {
+    display: flex;
+  }
+}
+
+/* =============================================================
+   SITE-WIDE BACKGROUND
+   A single fixed layer sits behind the entire page (z-index: -1), so
+   every section shares one continuous backdrop instead of each section
+   carrying its own background. home.js mounts an animated Vanta.js FOG
+   effect (Three.js/WebGL) into this element, recolored to the site's
+   own plum/berry palette instead of Vanta's default green. The
+   background color below is the fallback: it's what shows before the
+   animation library finishes loading, and what stays if it fails to
+   load or the visitor has "reduce motion" turned on (home.js skips
+   starting the animation in that case).
+============================================================= */
+.site-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--plum-deep);
+  overflow: hidden;
+  transition: opacity 0.3s var(--ease);
+}
+
+/* Drifting dust specks, painted just above the fog (same z-index, later
+   in the HTML so it layers on top) and below all real page content. */
+.dust-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+
+/* The animated fog + dust are designed around the dark palette (a
+   misty berry/plum haze on near-black) and would just read as a muddy
+   smear over a light page, so both are simply hidden in light mode —
+   the plain --plum-deep background color (now a soft off-white) shows
+   in their place instead of trying to recolor a WebGL effect live. */
+[data-theme='light'] .site-bg,
+[data-theme='light'] .dust-canvas {
+  opacity: 0;
+}
+
+/* =============================================================
+   HERO
+============================================================= */
+.hero {
+  position: relative;
+  overflow: hidden;
+  /* Fill the screen and center the content within it, rather than a
+     fixed top offset pushing everything toward the top of the page —
+     this is what puts the hero in the middle of the monitor instead
+     of just below the nav bar. */
+  min-height: 100vh;
+  min-height: 100dvh; /* accounts for mobile browser chrome, where supported */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Equal top/bottom padding matters here: with justify-content:center
+     above, unequal padding would pull the centered content off-center. */
+  padding: var(--space-xl) var(--space-md);
+}
+
+/* Two columns on wide screens — hero copy on the left, the tech-stack
+   panel (hero__skills, further down) on the right — collapsing to a
+   single centered column at 900px alongside the site's other
+   multi-column sections (see .contact in RESPONSIVE). 1180px matches
+   the max-width every other section uses. */
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  /* Equal columns so the boundary between them sits near the true
+     horizontal center of the page — the tech-stack panel is then
+     flush to the start of its column (see .hero__skills) instead of
+     centered within it, putting its visual weight close to the
+     page's actual center rather than off toward the right edge. */
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+/* Copy column reads left-aligned, like a standard split hero — the
+   tech-stack panel beside it is the one that's centered (see
+   .hero__skills below). */
+.hero__text {
+  text-align: left;
+}
+
+/* Small availability badge shown above the eyebrow line. A pulsing
+   dot is a common, easily-read "I'm open to work" signal on a
+   portfolio — kept subtle (small, muted border, no bright color)
+   so it reads as a status note rather than a loud call-to-action. */
+.hero__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 198, 199, 0.3);
+  background: rgba(var(--surface-rgb), 0.05);
+  color: var(--cream);
+  font-size: 0.74rem;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.hero__status-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4CAF6A;
+  box-shadow: 0 0 0 0 rgba(76, 175, 106, 0.55);
+  animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(76, 175, 106, 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgba(76, 175, 106, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 106, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__status-dot {
+    animation: none;
+  }
+}
+
+.hero__eyebrow {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-sm);
+}
+
+.hero__name {
+  /* Raised the upper cap again (was 5.4rem) as part of the site-wide
+     move toward bolder, larger type — below roughly 1230px viewport
+     width this renders close to before, growing more noticeably above
+     that width where there's room for a bigger headline. Nudged down
+     twice since (first ~8% to 2.95/6.4vw/5.7rem, then another ~8%
+     below) per two "just a little smaller" requests. */
+  font-size: clamp(2.7rem, 5.9vw, 5.25rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+}
+
+/* Surname gets its own decorative flourish: a flowing script face
+   (Dancing Script, loaded in home.html) in place of the serif used
+   everywhere else, like a signature under the plain "Rea-Lyn" line.
+   Uses the same berry-tinted accent color as each section's small
+   eyebrow label, so the two tie together as one deliberate accent
+   instead of a random extra color. Sized up a touch (1.12em) because
+   script faces read visually smaller than a serif at the same
+   font-size (thinner strokes, more open letterforms), and given a
+   touch of positive line-height room above/below so its loops and
+   flourishes don't get clipped by the heading's tight line-height. */
+.hero__name-accent {
+  display: inline-block;
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.12em;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+  color: var(--gold); /* fallback for browsers without color-mix() */
+  color: color-mix(in srgb, var(--berry) 55%, var(--cream) 45%);
+}
+
+/* Small decorative flourish under the name — a single hand-drawn-
+   looking line, not actual lettering. Drawn on load by animating
+   stroke-dashoffset from the path's own length down to 0 (see
+   home.js, section 7); the dasharray/dashoffset are set in JS
+   because they depend on the path's measured length. Purely
+   decorative, so it carries no color fallback concerns beyond the
+   same two-step pattern used everywhere else on the page. */
+.hero__flourish {
+  display: block;
+  width: min(320px, 60%);
+  height: 43px;
+  margin: 0.25rem 0 var(--space-sm);
+}
+
+.hero__flourish path {
+  fill: none;
+  stroke: var(--gold); /* fallback for browsers without color-mix() */
+  stroke: color-mix(in srgb, var(--berry) 55%, var(--cream) 45%);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero__tagline {
+  margin: 0;
+  max-width: 52ch;
+  font-size: clamp(0.95rem, 1vw, 1.14rem);
+  color: var(--gold);
+}
+
+.hero__actions {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Bouncing chevron inviting the visitor to scroll down */
+.hero__scroll-cue {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: fit-content;
+  margin: var(--space-lg) auto 0;
+  color: var(--cream);
+  opacity: 0.7;
+  animation: bounce 2.2s ease-in-out infinite;
+}
+
+.hero__scroll-cue .icon {
+  width: 26px;
+  height: 26px;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+/* =============================================================
+   HERO — TECH STACK (hero__skills)
+   Shown as four stacked "layers" (Languages & Markup, Frameworks &
+   Libraries, Database, Tools & Platforms) instead of a flat icon
+   grid, so the "stack" in "tech stack" is actually something you
+   can see — this replaces the old standalone "Skills & Expertise"
+   section further down the page, which has been removed so the
+   same list isn't shown twice. Sits beside the hero copy at desktop
+   widths (see .hero__inner above) and collapses to a single
+   centered column below 900px, alongside the site's other
+   multi-column sections (see .contact in RESPONSIVE).
+============================================================= */
+/* Centered as its own contained block (rather than stretching edge-
+   to-edge across the grid column) so it reads as a distinct panel
+   next to the now left-aligned copy column. */
+.hero__skills {
+  width: 88%;
+  max-width: 460px;
+  /* Flush to the start of its (now equal-width) column rather than
+     centered within it — see .hero__inner above for why. Restored
+     to a centered block below 900px, once the columns collapse and
+     this is the only thing in its row (see RESPONSIVE). */
+  margin: 0;
+}
+
+.hero__skills-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.7;
+  margin: 0 0 1rem;
+}
+
+.hero__skills-layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hero__skills-layer {
+  --layer-accent: var(--berry);
+  position: relative;
+  background: rgba(var(--surface-rgb), 0.04);
+  border: 1px solid rgba(197, 198, 199, 0.14);
+  border-left: 3px solid var(--layer-accent);
+  border-radius: 10px;
+  padding: 0.95rem 1.2rem;
+  margin-bottom: 0.65rem;
+  box-shadow: 0 14px 28px -20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s var(--ease);
+}
+
+.hero__skills-layer:last-child {
+  margin-bottom: 0;
+}
+
+/* Each layer is nudged a little further right than the one above it,
+   and its left-accent color shifted a little further from berry
+   toward gold — together, these two small steps are what make four
+   identical-width bars read as a stack instead of a plain list. */
+.hero__skills-layer:nth-child(1) { --layer-accent: var(--berry); margin-left: 0; }
+.hero__skills-layer:nth-child(2) { --layer-accent: color-mix(in srgb, var(--berry) 66%, var(--gold) 34%); margin-left: 0.6rem; }
+.hero__skills-layer:nth-child(3) { --layer-accent: color-mix(in srgb, var(--berry) 33%, var(--gold) 67%); margin-left: 1.2rem; }
+.hero__skills-layer:nth-child(4) { --layer-accent: var(--gold); margin-left: 1.8rem; }
+
+.hero__skills-layer:hover {
+  transform: translateX(-2px);
+}
+
+.hero__skills-layer__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+
+.hero__skills-layer__index {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--layer-accent);
+}
+
+.hero__skills-layer__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--cream);
+}
+
+.hero__skills-layer__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.hero__skills-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(var(--overlay-rgb), 0.35);
+  border: 1px solid rgba(197, 198, 199, 0.16);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem 0.3rem 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cream);
+  white-space: nowrap;
+}
+
+.hero__skills-chip .icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.hero__skills-chip .icon-text {
+  font-size: 0.56rem;
+  font-weight: 800;
+}
+
+/* =============================================================
+   ICON TOOLTIPS
+   A small CSS-only label that pops up above any element carrying
+   a data-tooltip attribute — used on the orbit skill badges above
+   and on the social/contact icon links further down. No markup
+   beyond the attribute itself; the text comes from attr(data-tooltip).
+   The orbit badges are already position:absolute (a valid anchor for
+   this), and .contact__social a / .hero__contact-icons a each got an
+   explicit "position: relative" added alongside this for the same
+   reason.
+============================================================= */
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  margin-bottom: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease);
+  z-index: 40;
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+/* One orchestrated entrance animation for the hero only (per motion guidance) */
+.hero__inner {
+  animation: rise-in 0.8s var(--ease) both;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =============================================================
+   SCROLL-REVEAL UTILITY
+   Elements below the fold fade and rise into place the first
+   time they enter the viewport (see the IntersectionObserver in
+   home.js). Safety by design: home.js is the ONLY thing that ever
+   adds "is-armed" (the hidden starting state) — right before it
+   also sets up the observer that will reveal it. So if home.js
+   never runs for any reason, elements simply keep their normal,
+   fully-visible appearance instead of getting stuck invisible.
+============================================================= */
+.reveal {
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+
+.reveal.is-armed {
+  opacity: 0;
+  transform: translateY(28px);
+}
+
+.reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.work-card:nth-child(1) { transition-delay: 0s; }
+.work-card:nth-child(2) { transition-delay: 0.1s; }
+
+.review-card:nth-child(1) { transition-delay: 0s; }
+.review-card:nth-child(2) { transition-delay: 0.1s; }
+.review-card:nth-child(3) { transition-delay: 0.2s; }
+
+.contact__form.reveal { transition-delay: 0.1s; }
+
+/* =============================================================
+   WORKS
+   Two cards side by side, each with a wide, landscape-oriented
+   photo/mockup on top (16:10, not the old boxier 4:3) so the
+   images read as actual screenshots of a horizontal screen,
+   not a cropped-in square.
+============================================================= */
+.works__grid {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+.work-card {
+  transition: opacity 0.7s var(--ease), transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  background: rgba(var(--surface-rgb), 0.04);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(197, 198, 199, 0.15);
+}
+
+.work-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+  border-color: rgba(197, 198, 199, 0.3);
+}
+
+.work-card__media {
+  aspect-ratio: 16 / 10;
+  background: var(--lavender);
+  overflow: hidden;
+}
+
+.work-card__svg,
+.work-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s var(--ease);
+}
+
+.work-card__media img {
+  display: block;
+}
+
+.work-card:hover .work-card__svg,
+.work-card:hover .work-card__media img {
+  transform: scale(1.06);
+}
+
+.work-card__body {
+  padding: var(--space-md) var(--space-md) var(--space-lg);
+}
+
+.work-card__title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.work-card__desc {
+  font-size: 0.9rem;
+  color: var(--gold);
+  max-width: none;
+  margin-bottom: 0.5rem;
+}
+
+.work-card__meta {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: var(--space-sm);
+}
+
+.work-card__meta span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--plum);
+  background: var(--lavender);
+  padding: 0.2rem 0.55rem;
+  border-radius: 50px;
+}
+
+/* Outbound links for a card with a real live deploy/repo to point to.
+   Small pill buttons — same hover-lift language as .btn further down
+   the page, just lighter weight so they stay secondary to the hero
+   CTAs. */
+.work-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.work-card__links a,
+.work-card__links button {
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--cream);
+  background: rgba(var(--surface-rgb), 0.08);
+  border: 1px solid rgba(197, 198, 199, 0.25);
+  padding: 0.45rem 0.9rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease),
+    color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.work-card__links a:hover,
+.work-card__links button:hover {
+  background: var(--berry);
+  border-color: var(--berry);
+  color: var(--cream);
+  transform: translateY(-2px);
+}
+
+/* "View" (and "Live", for the card with a real deploy) are the
+   primary actions — filled all the time instead of only on hover,
+   so they read as the main thing to click, with "Code" staying
+   as the quieter outline button next to them. */
+.work-card__btn--primary {
+  background: var(--berry);
+  border-color: var(--berry);
+}
+
+.work-card__btn--primary:hover {
+  background: var(--berry-dark);
+  border-color: var(--berry-dark);
+}
+
+/* =============================================================
+   REVIEWS
+============================================================= */
+.reviews__grid {
+  max-width: 1220px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+/* Solid, soft-white surface (var(--paper)/var(--ink) were defined up in
+   DESIGN TOKENS for exactly this — a light card sitting on the site's
+   dark sections — but hadn't been used anywhere until now). A pure
+   #FFFFFF card read a little stark against the near-black background,
+   so this leans on --paper with a faint plum tint mixed in instead. */
+.review-card {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  /* Literal fallback (not var(--cream)) on purpose: --cream now flips to
+     a dark color in light theme, but this card is meant to stay a
+     light, --paper-based surface in BOTH themes, same as --ink/--paper
+     themselves not changing with the toggle. */
+  background: #FFFFFF; /* fallback for browsers without color-mix() */
+  background: color-mix(in srgb, var(--paper) 96%, var(--plum) 4%);
+  border: 1px solid transparent;
+  /* Rounder than the site's usual --radius-md (14px) — kept local to
+     this component rather than changing that shared token, to match
+     the softer, more pillowy card shape in the reference. */
+  border-radius: 22px;
+  padding: 2.1rem;
+  color: var(--ink);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  transition: box-shadow 0.25s var(--ease), transform 0.3s var(--ease), border-color 0.25s var(--ease);
+}
+
+/* In light mode the page itself is a similar near-white, so this card
+   needs a hairline border to stay visible as its own surface instead
+   of blending into the section background. */
+[data-theme='light'] .review-card {
+  border-color: rgba(11, 12, 16, 0.08);
+}
+
+.review-card:hover {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
+  transform: translateY(-3px);
+}
+
+/* Top row: date posted (left) + star rating (right) — replaces the
+   decorative quotation-mark glyph the reference design used. */
+.review-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.review-card__date {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.review-card p {
+  max-width: none;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.review-card cite {
+  display: block;
+  /* auto margin (not a fixed spacing value) is what pins this to the
+     card's bottom edge regardless of message length, now that
+     .review-card is a column flex container — a short review and a
+     long one in the same row will still both have their name flush
+     with the bottom instead of right under their own text. */
+  margin-top: auto;
+  padding-top: var(--space-md);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--berry);
+}
+
+/* Read-only star display used on review cards. Plain characters instead
+   of SVGs — five short spans are simpler to generate from home.js than
+   icon markup, and render consistently enough for this purpose. */
+.star-rating {
+  display: inline-flex;
+  gap: 0.1em;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.star-rating .star {
+  color: rgba(11, 12, 16, 0.15);
+}
+
+.star-rating .star.is-filled {
+  color: var(--star-gold);
+}
+
+/* =============================================================
+   STAR PICKER (review form)
+   A pure-CSS 5-star input. Radios run 5→1 in the markup and the
+   fieldset is flex row-reverse, so visually star 1 is leftmost while
+   staying first on the page's tab order. Checking star N should light
+   up N and everything to its left (i.e. every radio *after* it in the
+   markup) — the "~" general sibling selector below does exactly that,
+   and label:hover ~ label previews the same thing before clicking.
+============================================================= */
+.star-picker {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.star-picker legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.star-picker input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.star-picker label {
+  cursor: pointer;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: rgba(var(--surface-rgb), 0.2);
+  transition: color 0.15s var(--ease);
+}
+
+.star-picker input:checked ~ label,
+.star-picker label:hover,
+.star-picker label:hover ~ label {
+  color: var(--star-gold);
+}
+
+.review-form-wrap {
+  max-width: 480px;
+  margin: var(--space-lg) auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.review-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* .review-form sets display:flex above so the form lays out correctly
+   once it's open — but that flex rule is an author style, and author
+   styles beat the browser's built-in "[hidden] { display: none }" rule
+   even though both only have one class/attribute's worth of specificity.
+   Without this, the [hidden] attribute added in home.html (and toggled
+   by home.js) has no visual effect and the whole form stays visible
+   before the "+ Add a review" button is ever clicked. This rule pairs
+   the class with [hidden] for higher specificity so it wins instead. */
+.review-form[hidden] {
+  display: none;
+}
+
+.review-form input,
+.review-form select,
+.review-form textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--surface-rgb), 0.25);
+  background: rgba(var(--surface-rgb), 0.08);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  resize: vertical;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+/* The placeholder option ("What are you reviewing?") is disabled and
+   selected by default — style it like the input placeholders below
+   so an unopened select doesn't look like a real choice. Once a real
+   option is picked, the select's own text uses the normal --cream
+   color set above, same as the other fields. */
+.review-form select:required:invalid,
+.review-form select option[value=""] {
+  color: #9A9B9D;
+}
+
+.review-form input:focus,
+.review-form select:focus,
+.review-form textarea:focus {
+  border-color: var(--gold);
+  background: rgba(var(--surface-rgb), 0.12);
+}
+
+.review-form input::placeholder,
+.review-form textarea::placeholder {
+  color: #9A9B9D;
+}
+
+/* Status line under the review form ("submitted, pending approval" /
+   error), same treatment as .contact__status below. */
+.review-form__status {
+  min-height: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--gold);
+  margin-top: 0.2rem;
+}
+
+.review-form__status.is-shown {
+  animation: pop-in 0.4s var(--ease) both;
+}
+
+/* Newly-added review card animates in on its own, independent of scroll */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.review-card.is-new {
+  animation: pop-in 0.4s var(--ease) both;
+}
+
+/* =============================================================
+   CONTACT
+============================================================= */
+.contact {
+  background: var(--plum-deep);
+  color: var(--cream);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  max-width: 1180px;
+  margin: 0 auto;
+  border-radius: var(--radius-md);
+}
+
+.contact__info p {
+  margin-top: var(--space-sm);
+  color: var(--gold);
+}
+
+.contact__details {
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 0.92rem;
+  color: var(--gold);
+}
+
+.contact__social {
+  margin-top: var(--space-lg);
+  display: flex;
+  gap: 0.8rem;
+}
+
+.contact__social a {
+  position: relative; /* anchors the [data-tooltip] popup — see ICON TOOLTIPS */
+  /* Kept in sync with .hero__contact-icons a above (same four icons,
+     same circle/border/icon size) — see the comment there. */
+  width: 41px;
+  height: 41px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--surface-rgb), 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream);
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.contact__social a .icon {
+  width: 23px;
+  height: 23px;
+}
+.contact__social a:hover {
+  background: var(--berry);
+  border-color: var(--berry);
+  transform: translateY(-3px);
+}
+
+/* =============================================================
+   HERO CONTACT / PROFILE ICONS
+   Small row of quick-link icons (LinkedIn, GitHub, email, phone)
+   under the hero CTAs — same visual language as .contact__social,
+   scoped separately since the hero sits on its own background.
+============================================================= */
+.hero__contact-icons {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.6rem;
+}
+
+.hero__contact-icons a {
+  position: relative; /* anchors the [data-tooltip] popup — see ICON TOOLTIPS */
+  /* Same circle size, border treatment and icon size as .contact__social
+     a below — it's the same four icons (LinkedIn/GitHub/email/phone)
+     shown again in the footer, and the two had drifted a px or two
+     apart from separate rounds of edits. Only the default (non-hover)
+     text/icon color is still deliberately different: gold here (a
+     muted accent under the hero's bold CTA buttons) vs cream in the
+     footer, where there's nothing brighter above it competing for
+     attention. */
+  width: 41px;
+  height: 41px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--surface-rgb), 0.3);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.hero__contact-icons a .icon {
+  width: 23px;
+  height: 23px;
+}
+
+.hero__contact-icons a:hover {
+  background: var(--berry);
+  border-color: var(--berry);
+  color: var(--cream);
+  transform: translateY(-3px);
+}
+
+.contact__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.field input,
+.field textarea {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(var(--surface-rgb), 0.25);
+  background: rgba(var(--surface-rgb), 0.06);
+  color: var(--cream);
+  font-family: var(--font-body);
+  resize: vertical;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.field input:focus,
+.field textarea:focus {
+  border-color: var(--gold);
+  background: rgba(var(--surface-rgb), 0.1);
+}
+
+.field input:invalid:not(:placeholder-shown) {
+  border-color: var(--berry);
+}
+
+.contact__status {
+  min-height: 1.2rem;
+  font-size: 0.9rem;
+  color: var(--gold);
+  margin-top: 0.2rem;
+}
+
+.contact__status.is-shown {
+  animation: pop-in 0.4s var(--ease) both;
+}
+
+/* =============================================================
+   FOOTER
+============================================================= */
+.footer {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md) var(--space-lg);
+}
+
+.footer__wordmark {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--cream);
+  max-width: none;
+}
+.footer__wordmark span {
+  color: var(--gold);
+}
+
+.footer__tagline {
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--gold);
+  max-width: none;
+}
+
+.footer__links {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.footer__links a {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gold);
+  transition: color 0.15s var(--ease);
+}
+.footer__links a:hover {
+  color: var(--cream);
+}
+
+.footer__copyright {
+  margin-top: var(--space-lg);
+  font-size: 0.8rem;
+  color: rgba(197, 198, 199, 0.6);
+  max-width: none;
+}
+
+/* =============================================================
+   CHATBOT
+   A small fixed widget: a round toggle button (JS fades it in once
+   the page has scrolled down a bit, same as the old back-to-top
+   button it replaced) that opens a panel above it. The panel is a
+   plain keyword-FAQ, not a live/AI chat — see the comment on the
+   markup in home.html and the topic data in home.js.
+============================================================= */
+.chatbot {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.85rem;
+}
+
+.chatbot__toggle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(155deg, var(--berry), var(--berry-dark));
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(11, 12, 16, 0.35);
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.chatbot__toggle .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.chatbot__toggle.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.chatbot__toggle:hover {
+  box-shadow: 0 12px 30px rgba(111, 34, 67, 0.5);
+  transform: translateY(-3px);
+}
+
+/* Suppress the toggle's own "Ask about Rea-Lyn" tooltip while the
+   panel is already open above it — otherwise a lingering :hover or
+   :focus-visible state (e.g. right after the click that opened it)
+   pops the tooltip up right next to the open panel. */
+.chatbot__panel:not([hidden]) ~ .chatbot__toggle::after {
+  display: none;
+}
+
+.chatbot__panel {
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(var(--overlay-rgb), 0.98);
+  border: 1px solid rgba(197, 198, 199, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.chatbot__panel[hidden] {
+  display: none;
+}
+
+/* A gentle pop-in whenever the panel becomes visible, instead of it
+   just snapping into place — re-triggers each time [hidden] is
+   removed, since the element re-enters the rendered tree. */
+.chatbot__panel:not([hidden]) {
+  animation: chatbot-pop-in 0.22s var(--ease) both;
+}
+
+@keyframes chatbot-pop-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.chatbot__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1.2rem;
+  background: linear-gradient(135deg, var(--berry), var(--berry-dark));
+  color: var(--cream);
+}
+
+.chatbot__header-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  /* Literal white, not rgba(var(--surface-rgb), X) — this sits on the
+     chatbot header's fixed berry gradient, which doesn't change with
+     the page theme, so it shouldn't flip to a dark tint in light mode
+     the way a page-background-relative tint would. */
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatbot__header-icon .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.chatbot__header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.chatbot__header-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.08rem;
+}
+
+.chatbot__header-sub {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.chatbot__close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--cream);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s var(--ease);
+}
+
+.chatbot__close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.chatbot__close .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.chatbot__messages {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.chatbot__message {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md); /* 14px — same value, now via the shared token */
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 88%;
+}
+
+.chatbot__message--bot {
+  background: rgba(197, 198, 199, 0.1);
+  color: var(--cream);
+  align-self: flex-start;
+  border-bottom-left-radius: 3px;
+}
+
+.chatbot__message--user {
+  background: var(--berry);
+  color: var(--cream);
+  align-self: flex-end;
+  border-bottom-right-radius: 3px;
+}
+
+.chatbot__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.95rem 1.1rem 1.1rem;
+  border-top: 1px solid rgba(197, 198, 199, 0.14);
+}
+
+.chatbot__topic {
+  background: transparent;
+  border: 1px solid rgba(197, 198, 199, 0.35);
+  color: var(--gold);
+  padding: 0.5rem 1.05rem;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.chatbot__topic:hover,
+.chatbot__topic:focus-visible {
+  background: var(--berry);
+  border-color: var(--berry);
+  color: var(--cream);
+  transform: translateY(-2px);
+}
+
+.chatbot__topic.is-active {
+  background: rgba(197, 198, 199, 0.16);
+  border-color: rgba(197, 198, 199, 0.5);
+  color: var(--cream);
+}
+
+@media (max-width: 480px) {
+  .chatbot {
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    align-items: stretch;
+  }
+  .chatbot__toggle {
+    align-self: flex-end;
+  }
+  .chatbot__panel {
+    width: 100%;
+    max-width: none;
+  }
+  .chatbot__messages {
+    max-height: 45vh;
+  }
+}
+
+/* =============================================================
+   WORK DETAIL MODAL
+   One popup reused for every project, filled in by home.js — a
+   dimmed backdrop over the whole page with a centered card.
+============================================================= */
+.work-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.work-modal[hidden] {
+  display: none;
+}
+
+.work-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: rgba(var(--overlay-rgb), 0.98);
+  border: 1px solid rgba(197, 198, 199, 0.18);
+  border-radius: var(--radius-md);
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.5);
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+  animation: chatbot-pop-in 0.22s var(--ease) both;
+}
+
+.work-modal__close {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(197, 198, 199, 0.25);
+  border-radius: 50%;
+  background: rgba(var(--surface-rgb), 0.08);
+  color: var(--cream);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.work-modal__close:hover {
+  background: var(--berry);
+  border-color: var(--berry);
+}
+
+.work-modal__close .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.work-modal__title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+  padding-right: var(--space-lg);
+}
+
+/* Full-width screenshot on top, same as a work card's image —
+   everything below it (tags, description, links) reads as one
+   column, not a side panel. A project with no real screenshots
+   yet just leaves the whole wrapper [hidden]. */
+.work-modal__media {
+  margin-bottom: var(--space-md);
+}
+
+.work-modal__media[hidden] {
+  display: none;
+}
+
+.work-modal__gallery {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--lavender);
+  margin-bottom: var(--space-xs);
+}
+
+.work-modal__gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.work-modal__gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(11, 12, 16, 0.55);
+  color: var(--cream);
+  cursor: pointer;
+  transition: background 0.15s var(--ease);
+}
+
+.work-modal__gallery-nav:hover {
+  background: var(--berry);
+}
+
+.work-modal__gallery-nav .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.work-modal__gallery-nav--prev {
+  left: var(--space-xs);
+}
+
+.work-modal__gallery-nav--next {
+  right: var(--space-xs);
+}
+
+/* Small clickable preview thumbnails — one per screenshot — instead
+   of plain dot pagination, so you can see which shot you're jumping
+   to, not just how many there are. */
+.work-modal__thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.work-modal__thumbs button {
+  width: 52px;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--lavender);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.work-modal__thumbs button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.work-modal__thumbs button:hover {
+  opacity: 1;
+}
+
+.work-modal__thumbs button.is-active {
+  opacity: 1;
+  border-color: var(--berry);
+}
+
+.work-modal__label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
+.work-modal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.work-modal__tags span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--plum);
+  background: var(--lavender);
+  padding: 0.2rem 0.55rem;
+  border-radius: 50px;
+}
+
+.work-modal__section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 0.5rem;
+}
+
+.work-modal__desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--gold);
+  margin-bottom: var(--space-md);
+}
+
+.work-modal__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.work-modal__links a {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.55rem 1.1rem;
+  border-radius: 50px;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease),
+    color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.work-modal__links a:hover {
+  transform: translateY(-2px);
+}
+
+.work-modal__links a.work-card__btn--primary {
+  border: 1px solid var(--berry);
+  color: var(--cream);
+}
+
+.work-modal__links a:not(.work-card__btn--primary) {
+  border: 1px solid rgba(197, 198, 199, 0.25);
+  background: rgba(var(--surface-rgb), 0.08);
+  color: var(--cream);
+}
+
+.work-modal__links a:not(.work-card__btn--primary):hover {
+  background: var(--berry);
+  border-color: var(--berry);
+}
+
+@media (max-width: 480px) {
+  .work-modal__panel {
+    padding: var(--space-md) var(--space-sm) var(--space-sm);
+  }
+}
+
+/* =============================================================
+   RESPONSIVE
+============================================================= */
+@media (max-width: 900px) {
+  .contact {
+    grid-template-columns: 1fr;
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .hero__inner {
+    grid-template-columns: 1fr;
+  }
+
+  /* Single column now, so the panel is centered as its own block
+     again instead of flush-left against a column boundary that no
+     longer exists. */
+  .hero__skills {
+    margin: 0 auto;
+  }
+
+  /* Cancel the desktop stagger — on a single narrow column the
+     layers read as a stack without it, and the indent would just
+     eat into the available width. */
+  .hero__skills-layer:nth-child(1),
+  .hero__skills-layer:nth-child(2),
+  .hero__skills-layer:nth-child(3),
+  .hero__skills-layer:nth-child(4) {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .nav__links {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: rgba(var(--overlay-rgb), 0.97);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-md);
+    gap: var(--space-sm);
+    transform: translateY(-120%);
+    opacity: 0;
+    transition: transform 0.25s var(--ease), opacity 0.25s var(--ease);
+    border-bottom: 1px solid rgba(197, 198, 199, 0.12);
+  }
+
+  .nav__links.is-open {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .nav__toggle {
+    display: flex;
+  }
+
+  /* Morph hamburger into an X when menu is open (class toggled by JS) */
+  .nav__toggle.is-active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .nav__toggle.is-active span:nth-child(2) {
+    opacity: 0;
+  }
+  .nav__toggle.is-active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+}
+
+@media (max-width: 520px) {
+  section {
+    padding: var(--space-lg) var(--space-sm);
+  }
+}
+
+/* Disable hover-lift micro-interactions on touch devices, where
+   there's no real hover state to speak of */
+@media (hover: none) {
+  .work-card:hover,
+  .review-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
